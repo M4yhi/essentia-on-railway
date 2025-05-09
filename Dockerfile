@@ -9,12 +9,16 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# --- TensorFlow C API ---
+
 RUN wget -q https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.12.0.tar.gz && \
     tar -C /usr/local -xzf libtensorflow-cpu-linux-x86_64-2.12.0.tar.gz && \
-    ldconfig && rm libtensorflow-cpu-linux-x86_64-2.12.0.tar.gz
+    ldconfig && \
+    rm libtensorflow-cpu-linux-x86_64-2.12.0.tar.gz
 
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+ENV LIBRARY_PATH=/usr/local/lib:$LIBRARY_PATH
+ENV CPLUS_INCLUDE_PATH=/usr/local/include:$CPLUS_INCLUDE_PATH
+
 
 # --- Python deps ---
 RUN pip install --no-cache-dir numpy six
