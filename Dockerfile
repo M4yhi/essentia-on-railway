@@ -1,8 +1,10 @@
 FROM python:3.10-slim
 
-# Системные зависимости
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+# Установка зависимостей
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
+    libeigen3-dev \
     libfftw3-dev \
     libsamplerate0-dev \
     libtag1-dev \
@@ -10,30 +12,33 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libavcodec-dev \
     libavformat-dev \
     libavutil-dev \
-    libboost-all-dev \
-    libsndfile1-dev \
+    libswresample-dev \
+    libchromaprint-dev \
     python3-dev \
-    python3-pip \
+    python3-numpy \
+    python3-yaml \
+    python3-six \
     git \
     pkg-config \
     wget \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Клонируем Essentia + подмодули
+# Клонирование Essentia с подмодулями
 WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
 
-# Сборка с помощью waf
+# Сборка и установка Essentia
 WORKDIR /opt/essentia
-RUN ./waf configure --mode=release --build-static --with-python && \
-    ./waf build && \
-    ./waf install
+RUN chmod +x waf && \
+    python3 waf configure --mode=release --build-static --with-python && \
+    python3 waf build && \
+    python3 waf install
 
 # Установка Python-биндингов
 WORKDIR /opt/essentia/bindings/python
 RUN pip install .
 
-# Копируем приложение
+# Копирование и установка зависимостей Python-приложения
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
