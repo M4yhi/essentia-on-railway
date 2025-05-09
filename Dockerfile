@@ -7,7 +7,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir numpy
+RUN pip install --no-cache-dir numpy six
 
 WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
