@@ -16,33 +16,31 @@ RUN apt-get update && \
     git \
     cmake \
     pkg-config \
+    python3-dev \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Установка рабочей директории
+# Клонирование Essentia (поверхность, без истории)
 WORKDIR /opt
+RUN git clone --depth=1 https://github.com/MTG/essentia.git
 
-# Клонирование и сборка Essentia
-RUN git clone https://github.com/MTG/essentia.git && \
-    cd essentia && \
-    mkdir build && cd build && \
-    cmake .. -DBUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) && \
+# Сборка Essentia
+WORKDIR /opt/essentia/build
+RUN cmake .. -DBUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) && \
     make -j4 && \
     make install && \
-    ldconfig && \
-    cd ../bindings/python && \
-    pip install .
+    ldconfig
+
+# Установка Python биндингов
+WORKDIR /opt/essentia/bindings/python
+RUN pip install .
 
 # Установка зависимостей Python
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Копирование приложения
 COPY . /app
 
-# Открытие порта
 EXPOSE 5000
-
-# Запуск приложения
 CMD ["python", "app.py"]
