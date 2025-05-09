@@ -29,7 +29,7 @@ RUN git clone --recursive https://github.com/MTG/essentia.git
 # Сборка Essentia
 WORKDIR /opt/essentia
 RUN chmod +x waf && \
-    python3 waf configure --mode=release --with-python --pythondir=/usr/local/lib/python3.10/dist-packages && \
+    python3 waf configure --mode=release --with-python && \
     python3 waf build && \
     python3 waf install
 
