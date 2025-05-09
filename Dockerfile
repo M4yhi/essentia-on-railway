@@ -18,9 +18,15 @@ RUN git clone --recursive https://github.com/MTG/essentia.git
 # Сборка Essentia с TensorFlow
 WORKDIR /opt/essentia
 RUN wget -qO waf https://waf.io/waf-2.0.22 && chmod +x waf
+# Установка TensorFlow C API
+RUN curl -L https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.10.0.tar.gz | tar -C /usr/local -xz
+RUN ldconfig
+
+# Конфигурация и сборка Essentia
 RUN ./waf configure --mode=release --with-python --with-tensorflow && \
     ./waf build -j$(nproc) && \
     ./waf install
+
 
 # Добавляем TensorFlow модель жанров
 RUN mkdir -p /models && \
