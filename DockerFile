@@ -16,7 +16,6 @@ RUN apt-get update && \
     git cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка Essentia из исходников
 RUN git clone https://github.com/MTG/essentia.git && \
     cd essentia && \
     mkdir build && cd build && \
