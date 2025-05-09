@@ -27,11 +27,13 @@ WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
 
 # Сборка Essentia (без --build-static)
+# Сборка Essentia (без --build-static)
 WORKDIR /opt/essentia
+
 RUN chmod +x waf && \
     python3 waf configure --mode=release --with-python && \
-    python3 waf build && \
-    python3 waf install
+    python3 waf build -v || (cat /opt/essentia/build/config.log && false)
+
 
 # Установка Python-биндингов
 WORKDIR /opt/essentia/bindings/python
