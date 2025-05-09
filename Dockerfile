@@ -31,8 +31,9 @@ RUN wget -qO waf https://waf.io/waf-2.0.22 && chmod +x waf
 
 # если Chromaprint не нужен, добавь --disable-chromaprint ниже
 RUN ./waf configure --mode=release --with-python --with-tensorflow \
-    && ./waf build -j$(nproc) \
+    && ./waf build -v -j$(nproc) \
     && ./waf install
+
 
 # --- модели ---
 RUN mkdir -p /root/.essentia/models && \
