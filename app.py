@@ -6,30 +6,29 @@ app = Flask(__name__)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    file = request.files['audio']
-    filename = 'temp.wav'
-    file.save(filename)
+    try:
+        # Получаем аудиофайл из запроса
+        file = request.files['audio']
+        filename = "temp.wav"
+        file.save(filename)
 
-    audio = es.MonoLoader(filename=filename)()
+        # Загружаем аудио и извлекаем BPM
+        audio = es.MonoLoader(filename=filename)()
+        bpm, _, _, _, _ = es.RhythmExtractor2013(method="multifeature")(audio)
 
-    # BPM
-    bpm, _, _, _, _ = es.RhythmExtractor2013(method="multifeature")(audio)
+        # Удаляем временный файл
+        os.remove(filename)
 
-    # Жанр и настроение — модель GMD
-    genreModel = es.TensorflowPredictEffnetDiscogs()
-    moodModel = es.TensorflowPredictVGGish()
-    genreVector = genreModel(audio)
-    moodVector = moodModel(audio)
+        # Возвращаем результат
+        return jsonify({
+            "bpm": round(bpm),
+            "genre": "unknown",
+            "mood": "unknown"
+        })
 
-    genre = genreModel.getLabels()[genreVector.index(max(genreVector))]
-    mood = moodModel.getLabels()[moodVector.index(max(moodVector))]
-
-    os.remove(filename)
-    return jsonify({
-        'bpm': round(bpm),
-        'genre': genre,
-        'mood': mood
-    })
+    except Exception as e:
+        print(f"🔥 Ошибка анализа: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
