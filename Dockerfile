@@ -1,7 +1,8 @@
 FROM python:3.10-slim
 
+# 1. Установка системных зависимостей
 RUN apt-get update && \
-    apt-get install -y \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
     libfftw3-dev \
     libsamplerate0-dev \
@@ -11,11 +12,15 @@ RUN apt-get update && \
     libavformat-dev \
     libavutil-dev \
     libavresample-dev \
-    libboost-dev \
+    libboost-all-dev \
     libsndfile1-dev \
-    git cmake \
-    && rm -rf /var/lib/apt/lists/*
+    git \
+    cmake \
+    pkg-config \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# 2. Сборка и установка Essentia
 RUN git clone https://github.com/MTG/essentia.git && \
     cd essentia && \
     mkdir build && cd build && \
@@ -26,8 +31,9 @@ RUN git clone https://github.com/MTG/essentia.git && \
     cd ../bindings/python && \
     pip install .
 
+# 3. Копируем Python-файлы
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
 WORKDIR /app
