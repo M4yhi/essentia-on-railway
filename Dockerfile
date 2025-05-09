@@ -1,5 +1,6 @@
 FROM python:3.10-slim
 
+# Установка системных зависимостей
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
     libeigen3-dev \
@@ -18,10 +19,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     wget \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем numpy
+# Установка numpy (требуется для сборки Essentia)
 RUN pip install numpy
 
-# Клонируем Essentia с подмодулями
+# Клонирование Essentia с подмодулями
 WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
 
@@ -32,11 +33,11 @@ RUN chmod +x waf && \
     python3 waf build && \
     python3 waf install
 
-# Установка биндингов Python
+# Установка Python-биндингов
 WORKDIR /opt/essentia/bindings/python
 RUN pip install .
 
-# Устанавливаем зависимости проекта
+# Установка зависимостей твоего проекта
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
