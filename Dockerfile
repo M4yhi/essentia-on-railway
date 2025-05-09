@@ -19,10 +19,10 @@ RUN apt-get update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Работаем в нормальной директории
+# Установка рабочей директории
 WORKDIR /opt
 
-# Клонируем и собираем Essentia
+# Клонирование и сборка Essentia
 RUN git clone https://github.com/MTG/essentia.git && \
     cd essentia && \
     mkdir build && cd build && \
@@ -38,6 +38,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Копирование приложения
 COPY . /app
+
+# Открытие порта
 EXPOSE 5000
+
+# Запуск приложения
 CMD ["python", "app.py"]
