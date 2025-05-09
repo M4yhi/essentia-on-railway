@@ -26,20 +26,18 @@ RUN pip install numpy
 WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
 
-# Сборка Essentia (без --build-static)
-# Сборка Essentia (без --build-static)
+# Сборка Essentia
 WORKDIR /opt/essentia
-
 RUN chmod +x waf && \
-    python3 waf configure --mode=release --with-python && \
-    python3 waf build -v || (cat /opt/essentia/build/config.log && false)
-
+    python3 waf configure --mode=release --with-python --pythondir=/usr/local/lib/python3.10/dist-packages && \
+    python3 waf build && \
+    python3 waf install
 
 # Установка Python-биндингов
 WORKDIR /opt/essentia/bindings/python
 RUN pip install .
 
-# Установка зависимостей твоего проекта
+# Установка зависимостей вашего проекта
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
