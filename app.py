@@ -6,29 +6,32 @@ app = Flask(__name__)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    try:
-        # Получаем аудиофайл из запроса
-        file = request.files['audio']
-        filename = "temp.wav"
-        file.save(filename)
+    file = request.files['audio']
+    filename = "temp.wav"
+    file.save(filename)
 
-        # Загружаем аудио и извлекаем BPM
-        audio = es.MonoLoader(filename=filename)()
-        bpm, _, _, _, _ = es.RhythmExtractor2013(method="multifeature")(audio)
+    audio = es.MonoLoader(filename=filename)()
+    bpm, *_ = es.RhythmExtractor2013(method="multifeature")(audio)
 
-        # Удаляем временный файл
-        os.remove(filename)
+    # Жанр через TensorflowPredictEffnetDiscogs
+    genre_model = es.TensorflowPredictEffnetDiscogs(
+        graphFilename="/models/genre_discogs-effnet-discogs-50.pb",
+        output="prediction",
+        poolingType="mean"
+    )
+    genre_probs = genre_model(audio)
+    genre_labels = genre_model.getLabels()
+    genre = genre_labels[genre_probs.index(max(genre_probs))]
 
-        # Возвращаем результат
-        return jsonify({
-            "bpm": round(bpm),
-            "genre": "unknown",
-            "mood": "unknown"
-        })
+    # Пример "муд" — пока фейковый, так как Essentia не имеет mood-модели
+    mood = "calm" if bpm < 100 else "energetic"
 
-    except Exception as e:
-        print(f"🔥 Ошибка анализа: {e}")
-        return jsonify({"error": str(e)}), 500
+    os.remove(filename)
+    return jsonify({
+        "bpm": int(bpm),
+        "genre": genre,
+        "mood": mood
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
