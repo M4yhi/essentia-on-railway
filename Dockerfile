@@ -26,12 +26,14 @@ RUN pip install numpy
 WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
 
-# Сборка Essentia
+# Обновление waf до последней версии
 WORKDIR /opt/essentia
-RUN chmod +x waf && \
-    python3 waf configure --mode=release --with-python && \
-    python3 waf build && \
-    python3 waf install
+RUN wget https://waf.io/waf-2.0.22 && mv waf-2.0.22 waf && chmod +x waf
+
+# Сборка Essentia
+RUN ./waf configure --mode=release --with-python && \
+    ./waf build && \
+    ./waf install
 
 # Установка Python-биндингов
 WORKDIR /opt/essentia/bindings/python
