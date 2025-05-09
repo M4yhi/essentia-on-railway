@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-import essentia
 import essentia.standard as es
 import os
 
@@ -7,25 +6,15 @@ app = Flask(__name__)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    if 'audio' not in request.files:
-        return jsonify({'error': 'No audio file provided'}), 400
-
     file = request.files['audio']
-    temp_filename = 'temp_audio_file.mp3'
-    file.save(temp_filename)
+    filename = "temp.wav"
+    file.save(filename)
 
-    try:
-        loader = es.MonoLoader(filename=temp_filename)
-        audio = loader()
+    audio = es.MonoLoader(filename=filename)()
+    bpm, *_ = es.RhythmExtractor2013(method="multifeature")(audio)
 
-        rhythm_extractor = es.RhythmExtractor2013(method="multifeature")
-        bpm, _, _, _, _ = rhythm_extractor(audio)
+    os.remove(filename)
+    return jsonify({"bpm": bpm})
 
-        return jsonify({'bpm': bpm})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        os.remove(temp_filename)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
