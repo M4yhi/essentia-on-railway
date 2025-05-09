@@ -19,7 +19,10 @@ RUN apt-get update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Сборка и установка Essentia
+# Работаем в нормальной директории
+WORKDIR /opt
+
+# Клонируем и собираем Essentia
 RUN git clone https://github.com/MTG/essentia.git && \
     cd essentia && \
     mkdir build && cd build && \
@@ -31,11 +34,10 @@ RUN git clone https://github.com/MTG/essentia.git && \
     pip install .
 
 # Установка зависимостей Python
+WORKDIR /app
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
-WORKDIR /app
-
 EXPOSE 5000
 CMD ["python", "app.py"]
