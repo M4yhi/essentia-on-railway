@@ -1,8 +1,7 @@
 FROM python:3.10-slim
 
-# Установка зависимостей
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+# Системные зависимости
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
     libfftw3-dev \
     libsamplerate0-dev \
@@ -13,34 +12,31 @@ RUN apt-get update && \
     libavutil-dev \
     libboost-all-dev \
     libsndfile1-dev \
-    git \
-    cmake \
-    pkg-config \
     python3-dev \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    python3-pip \
+    git \
+    pkg-config \
+    wget \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Клонирование полной версии Essentia + подмодули
+# Клонируем Essentia + подмодули
 WORKDIR /opt
-RUN git clone https://github.com/MTG/essentia.git && \
-    cd essentia && \
-    git submodule update --init --recursive
+RUN git clone --recursive https://github.com/MTG/essentia.git
 
-# Сборка Essentia
-WORKDIR /opt/essentia/build
-RUN cmake .. -DBUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) && \
-    make -j4 && \
-    make install && \
-    ldconfig
+# Сборка с помощью waf
+WORKDIR /opt/essentia
+RUN ./waf configure --mode=release --build-static --with-python && \
+    ./waf build && \
+    ./waf install
 
-# Установка Python биндингов
+# Установка Python-биндингов
 WORKDIR /opt/essentia/bindings/python
 RUN pip install .
 
-# Копирование и установка зависимостей Python
+# Копируем приложение
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /app
 
