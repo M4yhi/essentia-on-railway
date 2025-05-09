@@ -1,38 +1,15 @@
-FROM python:3.8-bullseye
+FROM python:3.10-slim
 
-# --- system ---
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    build-essential git pkg-config wget curl \
-    libeigen3-dev libfftw3-dev libsamplerate0-dev libtag1-dev libyaml-dev \
-    libavcodec-dev libavformat-dev libavutil-dev libswresample-dev ffmpeg \
-    python3-dev && \
+# Системные пакеты
+RUN apt-get update && apt-get install -y \
+        build-essential ffmpeg libsndfile1 wget && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# --- python deps ---
-RUN pip install --no-cache-dir numpy six flask tensorflow==1.15.5
+# Python‑зависимости
+RUN pip install --no-cache-dir numpy scipy soundfile \
+    librosa==0.10.1 musicnn==0.2 tensorflow-cpu==2.13 flask
 
-# --- Essentia ---
-WORKDIR /opt
-RUN git clone --recursive https://github.com/MTG/essentia.git
-WORKDIR /opt/essentia
-
-# 1) вытащить headers/lib из wheel TF‑1.15
-RUN cd src/3rdparty/tensorflow && ./setup_from_python.sh && cd ../../..
-
-# 2) waf
-RUN wget -qO waf https://waf.io/waf-2.0.22 && chmod +x waf
-RUN ./waf configure --mode=release --with-python --with-tensorflow \
-    && ./waf build -j"$(nproc)" \
-    && ./waf install
-
-# --- модель жанров ---
-RUN mkdir -p /models && \
-    wget -qO /models/genre_discogs-effnet-discogs-50.pb \
-        https://essentia.upf.edu/models/genre/genre_discogs-effnet-discogs-50.pb
-
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-
-# --- Flask ---
+# Flask‑API
 WORKDIR /app
 COPY app.py .
 EXPOSE 5000
