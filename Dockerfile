@@ -7,18 +7,22 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir numpy six
+RUN pip install --no-cache-dir numpy six tensorflow==2.12
 
 WORKDIR /opt
 RUN git clone --recursive https://github.com/MTG/essentia.git
 WORKDIR /opt/essentia
 RUN wget -qO waf https://waf.io/waf-2.0.22 && chmod +x waf
 
-RUN ./waf configure --mode=release --with-python \
+RUN ./waf configure --mode=release --with-python --with-tensorflow \
     && ./waf build -j$(nproc) \
     && ./waf install
 
-# Устанавливаем LD_LIBRARY_PATH чтобы Python видел .so файлы
+# Копируем модель жанров
+RUN mkdir -p /root/.essentia/models \
+  && wget -q -O /root/.essentia/models/genre_classifier_discogs-effnet-bs64-1.pb \
+     https://essentia.upf.edu/models/classification/genre_classifier_discogs-effnet-bs64-1.pb
+
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 WORKDIR /app
