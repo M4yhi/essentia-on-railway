@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Установка системных зависимостей
+# Установка зависимостей
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
@@ -20,9 +20,11 @@ RUN apt-get update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Клонирование Essentia (поверхность, без истории)
+# Клонирование полной версии Essentia + подмодули
 WORKDIR /opt
-RUN git clone --depth=1 https://github.com/MTG/essentia.git
+RUN git clone https://github.com/MTG/essentia.git && \
+    cd essentia && \
+    git submodule update --init --recursive
 
 # Сборка Essentia
 WORKDIR /opt/essentia/build
@@ -35,10 +37,10 @@ RUN cmake .. -DBUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) && 
 WORKDIR /opt/essentia/bindings/python
 RUN pip install .
 
-# Установка зависимостей Python
+# Копирование и установка зависимостей Python
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
 
