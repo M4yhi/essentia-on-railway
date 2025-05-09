@@ -1,9 +1,9 @@
-# Base image — Python 3.9 slim подходит и TensorFlow 2.13, и musicnn‑master
+# Base image
 FROM python:3.9-slim
 
 # ── system deps ───────────────────────────────────────────────
 RUN apt-get update && apt-get install -y \
-    build-essential ffmpeg libsndfile1 wget && \
+    build-essential git ffmpeg libsndfile1 wget && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ── python deps ───────────────────────────────────────────────
