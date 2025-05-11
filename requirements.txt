@@ -1,5 +1,4 @@
 fastapi
 uvicorn
-aiofiles
+essentia==2.1b6
 python-multipart
-requests
