@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import tempfile
@@ -6,21 +6,24 @@ import os
 
 app = FastAPI()
 
-# CORS для Flutter
+# Разрешить Flutter-доступ
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # в проде лучше указать домен
+    allow_origins=["*"],  # В проде укажи домен
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-LASTFM_API_KEY = "YOUR_LASTFM_API_KEY"
+# Твой Last.fm API ключ
+LASTFM_API_KEY = "360745f70593d90490472b53be7c319c"
 
+# Попытка извлечь имя артиста из названия файла (формат: "Artist - Track.mp3")
 def extract_artist_from_filename(filename: str) -> str:
-    # Простой хак: пробуем взять имя артиста из названия файла
-    return filename.rsplit("-", 1)[0].strip()
+    parts = filename.replace(".mp3", "").split("-")
+    return parts[0].strip() if len(parts) > 1 else filename.replace(".mp3", "").strip()
 
+# Получить похожих артистов с Last.fm
 def get_similar_artists(artist_name: str):
     url = "http://ws.audioscrobbler.com/2.0/"
     params = {
@@ -30,13 +33,15 @@ def get_similar_artists(artist_name: str):
         "format": "json",
         "limit": 10
     }
+
     response = requests.get(url, params=params)
     data = response.json()
 
-    if "similarartists" in data:
-        return [artist["name"] for artist in data["similarartists"]["artist"]]
-    else:
-        return []
+    if "error" in data:
+        raise HTTPException(status_code=404, detail=data.get("message", "Artist not found"))
+
+    artists = data.get("similarartists", {}).get("artist", [])
+    return [a["name"] for a in artists]
 
 @app.post("/upload/")
 async def upload_mp3(file: UploadFile = File(...)):
@@ -44,19 +49,23 @@ async def upload_mp3(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only MP3 files are supported")
 
     try:
-        # Временно сохраняем файл
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
             tmp.write(await file.read())
             tmp_path = tmp.name
 
-        # Пытаемся извлечь имя артиста
         artist = extract_artist_from_filename(file.filename)
+
         if not artist:
-            raise HTTPException(status_code=422, detail="Could not detect artist name")
+            raise HTTPException(status_code=422, detail="Could not extract artist name")
 
         similar_artists = get_similar_artists(artist)
+
         os.remove(tmp_path)
-        return {"original_artist": artist, "similar_artists": similar_artists}
+
+        return {
+            "original_artist": artist,
+            "similar_artists": similar_artists
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
