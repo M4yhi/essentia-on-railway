@@ -16,7 +16,7 @@ app.add_middleware(
 )
 
 # Твой Last.fm API ключ
-LASTFM_API_KEY = "360745f70593d90490472b53be7c319c"
+LASTFM_API_KEY = "6154c8de33ba7f96a1f28a002bc6ef3c"
 
 # Попытка извлечь имя артиста из названия файла (формат: "Artist - Track.mp3")
 def extract_artist_from_filename(filename: str) -> str:
