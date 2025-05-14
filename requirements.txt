@@ -1,4 +1,7 @@
 fastapi
 uvicorn
-essentia==2.1b6
+librosa
+soundfile
+numpy
+scipy
 python-multipart
