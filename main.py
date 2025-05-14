@@ -32,10 +32,11 @@ async def analyze(file: UploadFile = File(...)):
             temp_file.write(await file.read())
             temp_path = temp_file.name
 
-        # Конвертация mp3 в WAV
+        # Переводим MP3 → WAV
         wav_path = temp_path + ".wav"
         convert_to_wav(temp_path, wav_path)
 
+        # Анализ BPM и тональности
         y, sr = librosa.load(wav_path, sr=None, mono=True, duration=120)
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
         chroma = librosa.feature.chroma_stft(y=y, sr=sr)
