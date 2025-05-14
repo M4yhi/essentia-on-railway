@@ -17,20 +17,21 @@ app.add_middleware(
 
 @app.post("/analyze/")
 async def analyze(file: UploadFile = File(...)):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
-        temp_file.write(await file.read())
-        temp_path = temp_file.name
-
     try:
-        y, sr = librosa.load(temp_path, sr=None)
+        suffix = "." + file.filename.split(".")[-1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(await file.read())
+            temp_path = temp_file.name
+
+        y, sr = librosa.load(temp_path, sr=None, mono=True, duration=120)
+
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
         chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-        key = np.argmax(chroma.mean(axis=1))
-        os.remove(temp_path)
+        key_index = np.argmax(chroma.mean(axis=1))
+        key = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][key_index]
 
-        return {
-            "bpm": int(round(tempo)),
-            "key": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][key]
-        }
+        os.remove(temp_path)
+        return {"bpm": int(round(tempo)), "key": key}
+
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Failed to process audio: {str(e)}"}
