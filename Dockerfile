@@ -1,24 +1,24 @@
 FROM python:3.10-slim
 
-# Установим базовые зависимости
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    build-essential \
-    libavformat-dev \
-    libavcodec-dev \
-    libavutil-dev \
-    libtag1-dev \
-    python3-pip \
+    libsndfile1 \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Установим essentia и другие библиотеки
-RUN pip install essentia==2.1b6 fastapi uvicorn python-multipart
-
-# Создаем рабочую директорию
+# Создание рабочей директории
 WORKDIR /app
 
-# Копируем все файлы
+# Копирование зависимостей
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копирование исходников
 COPY . .
 
-# Запуск
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Открытие порта
+EXPOSE 8000
+
+# Запуск сервера
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
